@@ -1,11 +1,12 @@
-# Try to allocate max size memory for each device
+# Vulkan: Try to allocate max size memory for each device
 
-For each device found, query the max memory allocation size, and try to allocate device memory of that size.
+For each Vulkan device found, query the max memory allocation size, and try to allocate device memory of that size.
 
 ## Build
 
 ### Prerequisites
-Microsoft Visual Studio 2022 (64-bit) Version 17.10.5 or later with the "Desktop development with C++" Workload installed.
+- Microsoft Visual Studio 2022 (64-bit) Version 17.10.5 or later with the "Desktop development with C++" Workload installed.
+- Latest VulkanSDK installed
 
 ### Build
 - Run a Developer PowerShell for Visual Studio 2022
