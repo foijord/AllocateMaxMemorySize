@@ -12,6 +12,7 @@ int main(int argc, char* argv[])
 		for (auto physicalDevice : instance->enumeratePhysicalDevices()) {
 			auto vulkanPhysicalDevice = std::make_shared<VulkanPhysicalDevice>(physicalDevice);
 			std::cout << vulkanPhysicalDevice->deviceName() << std::endl;
+			std::cout << "Driver Version: " << vulkanPhysicalDevice->driverVersion() << std::endl;
 
 			// need at least one queue
 			auto computeQueueFamilyIndex = vulkanPhysicalDevice->getQueueFamilyIndex(VK_QUEUE_COMPUTE_BIT);

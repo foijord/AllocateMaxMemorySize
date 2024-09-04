@@ -21,18 +21,21 @@ Example output 1: allocating the maximum size:
 ```
 PS D:\code\github\AllocateMaxMemorySize> .\Build\Debug\AllocateMaxMemorySize.exe
 AMD Radeon RX 7900 XT
+Driver Version: 8388907
 max allocation size: 2147483648 bytes.
 allocation size larger than maximum allowed, clamping...
 allocating 2147483648 bytes.
 successfully allocated 2147483648 bytes.
 
 Intel(R) Arc(TM) A770 Graphics
+Driver Version: 101.5382
 max allocation size: 16777216000 bytes.
 allocation size larger than maximum allowed, clamping...
 allocating 16777216000 bytes.
 VK_ERROR_OUT_OF_DEVICE_MEMORY
 
 NVIDIA RTX A6000
+Driver Version: 2312470528
 max allocation size: 4292870144 bytes.
 allocation size larger than maximum allowed, clamping...
 allocating 4292870144 bytes.
@@ -45,12 +48,14 @@ Example output 2: allocating 4 GiB: (note the '4' as an argument)
 ```
 PS C:\Users\foeijord\code\AllocateMaxMemorySize> .\Build\Debug\AllocateMaxMemorySize.exe 4
 AMD Radeon RX 7900 XT
+Driver Version: 8388907
 max allocation size: 2147483648 bytes.
 allocation size larger than maximum allowed, clamping...
 allocating 2147483648 bytes.
 successfully allocated 2147483648 bytes.
 
 Intel(R) Arc(TM) A770 Graphics
+Driver Version: 101.5382
 max allocation size: 16777216000 bytes.
 allocating 4294967296 bytes.
 

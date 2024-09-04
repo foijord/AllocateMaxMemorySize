@@ -77,6 +77,18 @@ public:
 	{
 		return std::string(this->physicalDeviceProperties.deviceName);
 	}
+
+	std::string driverVersion() const
+	{
+		auto code = this->physicalDeviceProperties.driverVersion;
+		std::string version = std::to_string(code);
+		// INTEL version scheme (only on Windows)
+		if (this->physicalDeviceProperties.vendorID == 0x8086) {
+			version = std::to_string(code >> 14) + "." + std::to_string(code & 0x3fff);
+		}
+		return version;
+	}
+
 	VkDeviceSize getMaxMemoryAllocationSize(uint32_t memoryTypeIndex) const
 	{
 		if (memoryTypeIndex >= this->physicalDeviceMemoryProperties.memoryTypeCount) {
