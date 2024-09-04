@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <memory>
+#include <iostream>
 
 class VulkanInstance {
 public:
@@ -62,6 +63,7 @@ public:
 		physicalDevice(physicalDevice)
 	{
 		vkGetPhysicalDeviceProperties(this->physicalDevice, &this->physicalDeviceProperties);
+		vkGetPhysicalDeviceMemoryProperties(this->physicalDevice, &this->physicalDeviceMemoryProperties);
 
 		uint32_t count;
 		vkGetPhysicalDeviceQueueFamilyProperties(this->physicalDevice, &count, nullptr);
@@ -75,13 +77,24 @@ public:
 	{
 		return std::string(this->physicalDeviceProperties.deviceName);
 	}
-	VkDeviceSize getMaxMemoryAllocationSize() const
+	VkDeviceSize getMaxMemoryAllocationSize(uint32_t memoryTypeIndex) const
 	{
+		if (memoryTypeIndex >= this->physicalDeviceMemoryProperties.memoryTypeCount) {
+			throw Exception("VulkanPhysicalDevice::getMaxMemoryAllocationSize(): invalid memory type index!");
+		}
+		auto memoryHeapIndex = this->physicalDeviceMemoryProperties.memoryTypes[memoryTypeIndex].heapIndex;
+		if (memoryHeapIndex >= this->physicalDeviceMemoryProperties.memoryHeapCount) {
+			throw Exception("VulkanPhysicalDevice::getMaxMemoryAllocationSize(): invalid memory heap index!");
+		}
+		auto memoryHeapSize = this->physicalDeviceMemoryProperties.memoryHeaps[memoryHeapIndex].size;
+
 		VkPhysicalDeviceProperties2 properties2{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR };
 		VkPhysicalDeviceMaintenance3Properties maintenance3_properties{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES };
 		properties2.pNext = &maintenance3_properties;
 		vkGetPhysicalDeviceProperties2(this->physicalDevice, &properties2);
-		return maintenance3_properties.maxMemoryAllocationSize;
+
+		auto maxMemoryAllocationSize = maintenance3_properties.maxMemoryAllocationSize;
+		return std::min(maxMemoryAllocationSize, memoryHeapSize);
 	}
 
 	uint32_t getMemoryTypeIndex(uint32_t memoryTypeBits, VkMemoryPropertyFlags required_flags) const
@@ -151,6 +164,7 @@ public:
 
 	VkPhysicalDevice physicalDevice{ nullptr };
 	VkPhysicalDeviceProperties physicalDeviceProperties;
+	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
 	std::shared_ptr<VulkanInstance> instance{ nullptr };
 	std::vector<VkQueueFamilyProperties> physicalDeviceQueueFamilyProperties;
 	std::vector<VkDeviceQueueCreateInfo> deviceQueueCreateInfos;
@@ -169,6 +183,10 @@ public:
 		std::vector<const char*> device_extensions{};
 		const std::vector<VkDeviceQueueCreateInfo>& queue_create_infos = this->physicalDevice->deviceQueueCreateInfos;
 
+		VkPhysicalDeviceFeatures physicalDeviceFeatures{};
+		physicalDeviceFeatures.sparseBinding = VK_TRUE;
+		physicalDeviceFeatures.sparseResidencyImage3D = VK_TRUE;
+
 		VkDeviceCreateInfo device_create_info{
 			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 			.pNext = nullptr,
@@ -179,7 +197,7 @@ public:
 			.ppEnabledLayerNames = device_layers.data(),
 			.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size()),
 			.ppEnabledExtensionNames = device_extensions.data(),
-			.pEnabledFeatures = nullptr,
+			.pEnabledFeatures = &physicalDeviceFeatures,
 		};
 
 		THROW_ON_VULKAN_ERROR(vkCreateDevice(this->physicalDevice->physicalDevice, &device_create_info, nullptr, &this->device));
@@ -202,10 +220,13 @@ public:
 		VkExtent3D extent) :
 		device(std::move(device))
 	{
+		VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		VkImageCreateFlags flags = VK_IMAGE_CREATE_SPARSE_BINDING_BIT | VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT;
+
 		VkImageCreateInfo imageCreateInfo{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 			.pNext = nullptr,
-			.flags = 0,
+			.flags = flags,
 			.imageType = VK_IMAGE_TYPE_3D,
 			.format = VK_FORMAT_R8_UNORM,
 			.extent = extent,
@@ -213,7 +234,7 @@ public:
 			.arrayLayers = 1,
 			.samples = VK_SAMPLE_COUNT_1_BIT,
 			.tiling = VK_IMAGE_TILING_OPTIMAL,
-			.usage = VK_IMAGE_USAGE_SAMPLED_BIT,
+			.usage = usage,
 			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 			.queueFamilyIndexCount = 0,
 			.pQueueFamilyIndices = nullptr,
